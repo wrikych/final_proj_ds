@@ -1,0 +1,444 @@
+---
+title: "Stereos, Synths, and Subs"
+author: "Wrik Chakrabarti"
+date: "5/10/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE)
+```
+<h2 align='center'> An exploratory analysis of the Lofi, Vaporwave, and Phonk music genres </h2>
+
+<h3 align='center'> The dawn of the internet music subculture </h3>
+
+<b>For as long as it's been sung, played, chanted, or clapped,</b> music has become the one piece of nature that is uniquely human, and consistently around. Each chapter of our history sees us using music in the context of religion, entertainment, protest, and more beyond. 
+
+
+For the past two decades we've seen another of those chapters unfold. The advent of the Information Age brought with it a number of fundamental changes to our collective lifestyles and cultures, most of them coming in the form of the internet. Music wasn't immune to this cultural tidal wave either - the anonymity of the internet, along with the ability to download, playback, and splice audio data, and new themes of cultural commentary on the untraveled new post-cyberspace society created an explosion of new genres and music styles which keep evolving at a pace unforeseen in human history. 
+
+Three such genres have had a massive impact on me, so in the name of vanity and science we'll be looking at sample representations of these three genres: <b> <i> Lofi, Vaporwave </i> </b>, and <b> <i> Phonk </i> </b>.
+
+<h4> <b> Lofi </b> </h4>
+
+Lofi music gets its name from the term <i>low fidelity</i>, referencing low fidelity audio - the stereo fuzz and scratchy noises some older or damaged records had on vinyl. Lofi music is the oldest of the three, finding first exposure during the late 1960's with garage punk bands and rising to prominence during the golden era of hip hop with the proliferation of home recording hardware and software. 
+
+The music for which the term is most synonymous with now actually came alive most during the latter half of the 2010's, resonating most with the millennial generation to the point where a hallmark of the genre now is to include audio clips of old childhood shows of that particular generation (overwhelmingly from <i>Adult Swim</i> and <i>Toonami</i>). The genre is known for a relaxed, sleepy programmed beat and a nostalgic mood.
+
+<h4> <b> Vaporwave </b> </h4>
+
+Vaporwave is a genre that's seen a substantial amount of metamorphosis since the 1990's. The first genre created entirely on the internet, Vaporwave was developed largely through anonymous chat forums, a tradition that has spread to Vaporwave artists now under nonsensical or differently scripted pseudonyms. This made it a uniquely global musical movement, and it's faced an equally global speed of evolution as well - a consistent theme of irony emerged in the early 2010's (a reflection of disillusion with or fantasy of commercial culture involving weird pitches and strangely cut samples from advertisements other soundbites), which was promptly pushed so hard that it lost all nuance and just sounded bad. After the "Death of Vaporwave" in the late 2010's, the genre again rose from the ashes with new themes, musical motifs, and structure.
+
+Vaporwave as it is now is associated with dreamy synth music, with a slow, repetitive rhythm (usually on echoing drums), and comforting yet slightly eerie interjections of soundbites from popular 90's TV shows and advertisements. 
+
+<h4> <b> Phonk </b> </h4>
+
+Possibly the youngest of the three genres or the oldest depending on your perspective, phonk is a child of a hip hop subgenre itself - (the aptly named) Memphis rap is a subgenre from Memphis, Tennessee with a particular style of verbal cadence and instrumentation that still shows a presence now. Here's where the split happens. Phonk as a genre is known as a form of Memphis rap music with heavy saturation on the bass (the "dirty" bass sound), a fast-paced rhythm with kicks, hi-hats, snares, and distorted vocals. Originally these properties were a result of early splicing software and home-studio beatmakers and the low quality sound they produced, a product of a time well before the internet. However, as the Information Age took hold, the gritty and raw quality of the sound produced became a desired aesthetic, and post-internet phonk rose to prominence chasing and evolving it into a nuanced sound often paired with incongruently smooth piano or saxophone. 
+
+Phonk's also the latest of the three to rise to mainstream prominence - that can be credited to Tiktok, which led the way to a large part of the exposure phonk has now. A style of tiktok videos showcasing cars drifting and racing used phonk as background music, and an entirely new generation discovered the style. Phonk is probably the fastest evolving genre of the three, bolstered by the increased globalization and connection of the new internet. 
+
+<h3 align='center'> The Data </h3>
+
+I'm not a purist in any of these genres, so my criteria for building samples of each went as far as accepting what Spotify says. My rationale, beyond laziness, is that Spotify curates its songs based on popularity, and for a song to show up in a selected playlist for a certain genre we can be fairly confident the song is representative of the genre to a significant degree. I ended up finding three playlists (one for each genre) curated by Spotify, and used the Spotify API by way of python and the <b><i>spotipy</i></b> package (a python wrapper for the API). 
+
+This data contains information about a track's physical properties such as duration and loudness, musical properties such as key and mode, and a number of other variables detailing mood and energy. Each entry is a song from one of the 3 playlists, its corresponding dataset being said playlist.  
+
+In R, I used the <b><i>tidyverse</i></b> package to join the data I found for each playlist and give it a genre designation for later use. 
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+lofi <- read.csv('lofi.csv')
+vaporwave <- read.csv('vaporwave.csv')
+phonk <- read.csv('phonk.csv')
+lofi <- lofi %>% mutate(genre = "lofi")
+phonk <- phonk %>% mutate(genre = "phonk")
+vaporwave <- vaporwave %>% mutate(genre = "vaporwave")
+interim <- full_join(lofi, phonk)
+all_music <- full_join(interim, vaporwave)
+```
+
+Here's the resulting dataset at a glance, with selected features for viewing convenience:
+
+```{r message=FALSE}
+library(knitr)
+display <- all_music %>% select(track_name, artist, genre, tempo, duration_ms, valence)
+kable(display[1:5, ], caption = 'Spotify Data')
+```
+
+
+Here, you can see some of the various features as numerical values. All of the features as well as their scales and interpretation are explored below:
+
+<h4> <b> Feature Breakdown </b> </h4>
+
+<b> Mood </b>
+
+- *Danceability* - How easy this song is to dance to. Index value between 0 (least danceable) to 1 (most danceable)
+- *Valence* - Positivity of the song. Index value between 0 (most negative) and 1 (most positive)
+- *Energy* - Measure of the energy level of the song. Index value between 0 (slowest pace) and 1 (fastest pace)
+- *Tempo* - Tempo of the song. Measured in BPM (beats per minute)
+
+<b> Musical Properties </b> 
+
+- *Key* - The key of the song, codified in numbers  (0 refers to C)
+- *Time Signature* - In 1, 2, 3, or 4 beats per measure
+- *Mode* - Major or minor: 1 is major, 0 is minor
+
+<b> Acoustic Properties </b>
+
+- *Loudness* - How loud a song is. Measured in decibels restricted (0 is total restriction, the closer a number is to 0, the louder it is)
+- *Instrumentalness* - The amount of instrumentation in a song. Index from 0 (acapella) to 1 (full instrumental)
+- *Speechiness* - The amount of spoken/sung word in the song. Index from 0 (none) to 1 (all words)
+- *Duration* - The length of the song in milliseconds
+
+
+<h3 align='center'> Feature Exploration - Mood </h3>
+
+Let's start by looking at the difference in mood between the genres. From a general standpoint, I expected phonk to have a higher level of energy and overall more active mood, with vaporwave and lofi balancing out the low to mid levels of intensity. We'll see how valid that claim is shortly:
+
+<h4> <b> Valence and Danceability </b> </h4>
+
+For data visualization, I used the R packages <b><i>ggplot2</i></b> and <b><i>plotly</i></b> to make interactive plots that can provide a more robust picture of the distribution.  
+
+```{r message=FALSE}
+library(ggplot2)
+library(plotly)
+```
+
+```{r message=FALSE}
+p <- ggplot(data=all_music, mapping=aes(x=danceability, fill=as.factor(genre))) + geom_density(alpha=0.75) + theme_minimal() + ggtitle('Danceability by Genre') + xlab('danceability') + ylab('frequency') + labs(fill='genre')
+
+ggplotly(p)
+```
+
+```{r message=FALSE}
+p2 <- ggplot(data=all_music, mapping=aes(x=valence, fill=as.factor(genre))) + geom_density(alpha=0.75) + theme_minimal() + ggtitle('Valence by Genre') + xlab('valence') + ylab('frequency') + labs(fill='genre')
+
+ggplotly(p2)
+```
+
+
+<b> As far as danceability goes, </b> it actually seems like lofi's the most consistent - most focused around the 0.5 to 0.75 range, its distribution is much more concentrated than phonk, which lays claim to the latter side of the scale, and vaporwave, the most diverse genre out of the three in terms of danceability.
+
+
+This trend continues on the density plot for valence, where it is apparent that vaporwave is almost evenly distributed throughout the entire scale of the score. Vaporwave doesn't have a particular mood associated with it, so that makes sense. Phonk, expectedly so with the dark subject matter and instrumentation that phonk's parent genre employs, has a decidedly negative skew whereas lofi is much more ambivalent. Lofi is light and laid back, but also deals with rather bittersweet themes such as nostalgia and heartbreak.
+
+Both of these features focus on the instrumentation and tone of the song, but what about its speed and rhythm? To investigate that, let's look at the features of tempo and energy:
+
+<h4> <b> Tempo and Energy </b> </h4>
+
+```{r message=FALSE}
+p <- ggplot(data=all_music, mapping=aes(x=energy, fill=as.factor(genre))) + geom_density(alpha=0.75) + theme_minimal() + ggtitle('Energy Distribution by Genre') + xlab('energy') + ylab('frequency') + labs(fill='genre')
+
+ggplotly(p)
+```
+
+```{r message=FALSE}
+p2 <- ggplot(data=all_music, mapping=aes(x=tempo, fill=as.factor(genre))) + geom_density(alpha=0.75) + theme_minimal() + ggtitle('Distribution of Tempo by Genre') + xlab('tempo') + ylab('frequency') + labs(fill='genre')
+
+ggplotly(p2)
+```
+
+<b> We can see that </b> there are very clear distinctions between the genres as far as both tempo and energy go. Phonk dominates the higher portion of the energy scale, whereas lofi is starkly low energy. These are both consistent with the themes and moods of both genres. Vaporwave is somewhere in the middle, tending towards the range of 0.4 to 0.75. A running theme we can already find here is that vaporwave as a genre is far more diverse than either Lofi or Phonk. This supports the idea of Vaporwave being an eclectically built genre, as would be expected of a music style developed purely in cyberspace. 
+
+The tempo of lofi songs is decidedly lower than 100 in most cases, and phonk seems to range in between 100 and 120 BPM. As always, vaporwave spans the entire scale. Let's take a closer look - following are some of the fastest and slowest songs in each genre.
+
+<h4> <b> Lofi </b> </h4>
+
+Fastest:
+
+```{r}
+all_music %>% filter(genre=='lofi') %>% filter(tempo == max(tempo)) %>% select(track_name, artist, tempo) %>% knitr::kable()
+```
+
+<figure>
+    <figcaption>Monster Rally - Phthalo Blue</figcaption>
+    <audio
+        controls
+        src="monster_rally-edit.mp3">
+    </audio>
+</figure>
+
+Slowest:
+
+```{r}
+all_music %>% filter(genre=='lofi') %>% filter(tempo == min(tempo)) %>% select(track_name, artist, tempo) %>% knitr::kable()
+```
+
+<figure>
+    <figcaption>Bittersweet Memories - Epifania</figcaption>
+    <audio
+        controls
+        src="bittersweet-edit.mp3">
+    </audio>
+</figure>
+
+<h4> <b> Phonk </b> </h4>
+
+Fastest:
+
+```{r}
+all_music %>% filter(genre=='phonk') %>% filter(tempo == max(tempo)) %>% select(track_name, artist, tempo) %>% knitr::kable()
+```
+
+<figure>
+    <figcaption>Russia Vip - SXGXVX</figcaption>
+    <audio
+        controls
+        src="russia_vip-edit.mp3">
+    </audio>
+</figure>
+
+Slowest:
+
+```{r}
+all_music %>% filter(genre=='phonk') %>% filter(tempo == min(tempo)) %>% select(track_name, artist, tempo) %>% knitr::kable()
+```
+
+<figure>
+    <figcaption>ODIUM - LXCT CXNTURY</figcaption>
+    <audio
+        controls
+        src="odium-edit.mp3">
+    </audio>
+</figure>
+
+<h4> <b> Vaporwave </b> </h4>
+
+Fastest:
+
+```{r}
+all_music %>% filter(genre=='vaporwave') %>% filter(tempo == max(tempo)) %>% select(track_name, artist, tempo) %>% knitr::kable()
+```
+
+Slowest:
+
+```{r}
+all_music %>% filter(genre=='vaporwave') %>% filter(tempo == min(tempo)) %>% select(track_name, artist, tempo) %>% knitr::kable()
+```
+
+<figure>
+    <figcaption>Uncanny Valley Girl - Donor Lens</figcaption>
+    <audio
+        controls
+        src="uncannyValleyGirl-edit.mp3">
+    </audio>
+</figure>
+
+<b> We can also see </b> that even though Blue Monster Rally, the fastest lofi song in the sample is 201 BPM (which is insane), it's on cut time, meaning every song beat is 2 beats of the tempo. This song's true tempo would be around 100, so given more time that is something I would definitely inspect and separate. 
+
+
+To further understand the gist of these genres, let's look at their musical properties.
+
+<h3 align='center'> Feature Exploration - Musical Properties </h3>
+
+<h4> <b> Key </b> </h4>
+
+Currently, the key value is in numbers, so I'm going to use the feature description of the variable by Spotify to translate the key numbers into key names we can understand:
+
+```{r}
+## Translating number values for key into names of the keys
+list_of_keys = c('C','C#','D','D#','E','F','F#','G','G#','A','A#','B')
+all_music <- all_music %>% mutate(key_name = list_of_keys[key+1])
+all_music %>% select(key_name) %>% unique
+```
+
+Now, let's look at key usage across genre:
+
+```{r message=FALSE, warning=FALSE}
+p3 <- ggplot(data=all_music, mapping=aes(x=key_name, fill=genre)) + geom_histogram(stat='count', alpha=0.75) + theme_minimal() + ggtitle('Key use by genre') + xlab('key') + labs(fill='genre')
+ggplotly(p3)
+```
+
+*Vaporwave's favorite key:*
+
+```{r}
+
+all_music %>% filter(genre=='vaporwave') %>% group_by(key_name) %>% summarize(count=n()) %>% arrange(desc(count)) %>%
+    head(1) %>% knitr::kable()
+```
+
+*Lofi's favorite key:*
+
+```{r}
+
+all_music %>% filter(genre=='lofi') %>% group_by(key_name) %>% summarize(count=n()) %>% arrange(desc(count)) %>%
+    head(1) %>% knitr::kable()
+```
+
+
+*Phonk's favorite key:*
+
+```{r}
+
+all_music %>% filter(genre=='phonk') %>% group_by(key_name) %>% summarize(count=n()) %>% arrange(desc(count)) %>%
+    head(1) %>% knitr::kable()
+```
+
+<b> C# seems to be </b> a general favorite with both vaporwave and phonk, whereas lofi tends to utilize the A# key more. However, they are all pretty evenly distributed - we should be able to tell more with the mode.
+
+<h4> <b> Key </b> </h4>
+
+We will do the same thing as we did with the key column - give us another feature that shows us the name of the mode as according to Spotify:
+
+```{r message=FALSE}
+## Creating a mode name column
+all_music <- all_music %>% mutate(mode_name = ifelse(mode == 1, 'major', 'minor'))
+```
+
+<b> Lofi </b>
+```{r}
+all_music %>% filter(genre=='lofi') %>% group_by(mode_name) %>% summarize(count=n()) %>% knitr::kable()
+```
+
+<b> Vaporwave </b>
+
+```{r}
+all_music %>% filter(genre=='vaporwave') %>% group_by(mode_name) %>% summarize(count=n()) %>% knitr::kable()
+```
+
+<b> Phonk </b>
+
+```{r}
+all_music %>% filter(genre=='phonk') %>% group_by(mode_name) %>% summarize(count=n()) %>% knitr::kable()
+```
+
+All genres excluding lofi are more likely to utilize a major mode rather than a minor mode, with phonk surprisingly more so. This is in line with lofi's affinity for more nostalgic, bittersweet sounding music, something which minor scales are effective in representing. Phonk, though dark in nature, seems to employ more major scales, which could be explained by the fact that major scales tend to exude more energy than minor scales and artists can use sharp and flat tones within the scale to create the dissonance that minor scales naturally exhibit. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+p4 <- ggplot(data=all_music, mapping=aes(x=mode_name, fill=genre)) + geom_histogram(stat='count',alpha=0.75) + ggtitle('Mode use by Genre') + xlab('Mode') + labs(fill='genre')
+ggplotly(p4)
+```
+
+<b> I wanted to modify </b> the dataset to show the key and the mode name to see the favorite scale of each genre, so I do that here:
+
+```{r}
+all_music <- all_music %>% mutate(key_and_mode = ifelse(mode == 0, paste(key_name, "minor", " "), paste(key_name, "major"," ")))
+
+all_music %>% select(track_name, key_and_mode) %>% head(5)
+```
+
+
+*Vaporwave's Favorite Key - Modified to show mode*
+
+```{r}
+all_music %>% filter(genre=='vaporwave') %>% group_by(key_and_mode) %>% unique %>% select(key_and_mode) %>% head(1) %>% knitr::kable()
+```
+
+*Lofi's Favorite Key - Modified to show mode*
+
+```{r}
+all_music %>% filter(genre=='lofi') %>% group_by(key_and_mode) %>% unique %>% select(key_and_mode) %>% head(1) %>% knitr::kable()
+```
+
+*Phonk's Favorite Key - Modified to show mode*
+
+```{r}
+all_music %>% filter(genre=='phonk') %>% group_by(key_and_mode) %>% unique %>% select(key_and_mode) %>% head(1) %>% knitr::kable()
+```
+
+```{r echo=FALSE, warning=FALSE}
+plotty <- ggplot(data=all_music %>% filter(mode == 0), mapping=aes(x=key_name, fill=genre)) + geom_histogram(stat='count',alpha=0.75) + ggtitle('Minor Key Usage by Genre') + ylab('Frequency') + theme_minimal()
+
+ggplotly(plotty)
+```
+
+```{r echo=FALSE, warning=FALSE}
+plotty2 <- ggplot(data=all_music %>% filter(mode == 1), mapping=aes(x=key_name, fill=genre)) + geom_histogram(stat='count',alpha=0.75) + ggtitle('Major Key Usage by Genre') + ylab('Frequency') + theme_minimal()
+
+ggplotly(plotty2)
+```
+
+<h4> <b> Time Signature </b> </h4>
+
+Generally, most songs tend to be in 4 beats per measure, but triple and duple timing is fairly common too. This won't tell us too much about the properties of the songs, but it's interesting to look at. 
+
+```{r}
+plot <- ggplot(data=all_music, mapping=aes(x=time_signature, fill=genre)) + geom_histogram(stat='count',alpha=0.75) + theme_minimal() + ggtitle('Time Signature use by Genre') + xlab('time signature') + ylab('frequency')
+ggplotly(plot)
+```
+
+*Unusual time signatures - 1 beat per measure*
+
+```{r}
+all_music %>% filter(time_signature==1) %>% select(track_name, genre, artist) %>% knitr::kable()
+```
+
+
+*Unusual time signatures - 3 beats per measure*
+
+```{r}
+all_music %>% filter(time_signature==3) %>% select(track_name, genre, artist) %>% knitr::kable()
+```
+
+<h3 align='center'> Feature Exploration - Acoustic Properties </h3>
+
+<h4> <b> Speechiness and Instrumentalness </b> </h4>
+
+<b> Possibly the most self-explanatory </b> of all features, speechiness and instrumentalness describe the level and intensity of vocal and instrumental presence, respectively, in the track. I'd expect lofi to have a low speechiness level since it's largely instrumental, and phonk to have the opposite, though I'm not sure how the distorted vocals would factor in. Judging on how this report's gone by, I'm expecting vaporwave to span the plot again. 
+
+```{r}
+plotboi <- ggplot(data=all_music, mapping=aes(x=as.factor(genre), y=speechiness, fill=genre)) + geom_violin(alpha=0.75) + ggtitle('Speechiness by Genre') + theme_minimal() + coord_flip() + geom_jitter() + xlab('genre')
+ggplotly(plotboi)
+```
+
+```{r}
+plotboi2 <- ggplot(data=all_music, mapping=aes(x=as.factor(genre), y=instrumentalness, fill=genre)) + geom_violin(alpha=0.75) + ggtitle('Instrumentalness by Genre') + theme_minimal() + coord_flip() + geom_jitter() + xlab('genre')
+ggplotly(plotboi2)
+```
+
+<b> So interestingly enough, </b> there isn't much vocal action going on in any of the genres. They both round out around the left-hand side of the plot. Though phonk seems to be more spread out, both vaporwave and lofi seem to largely be on the higher end of the instrumental scale (the first time vaporwave's decided to pick a side on anything!). This would make sense though, as internet music in general focuses much more on instrumentation and production than would a live recording.
+
+<h4> <b> Loudness and Duration </b> </h4>
+
+Loudness is kind of tricky, because it's measured relative to the signal dampening level from Spotify's own playback software. In general, the louder a song is, the closer to zero the marker will be, and the further down the negative the quieter the song will be, since that means the signal is being choked much further.
+
+```{r echo=FALSE, warning=FALSE}
+viz4 <- ggplot(data=all_music, mapping=aes(x=loudness, fill=genre)) + geom_density(alpha=0.7) + xlab('genre')
+ggplotly(viz4)
+```
+
+Phonk is very clearly the loudest, with vaporwave a steady second and lofi the quietest. This very closely mirrors our inferences about energy.
+
+The duration level was in milliseconds so I made another column with duration as minutes for ease of data interpretation:
+
+```{r}
+### Creating a column with minutes
+all_music <- all_music %>% mutate(duration_min = duration_ms/60000)
+
+all_music %>% select(duration_min) %>% head(5)
+```
+
+```{r}
+viz5 <- ggplot(data=all_music, mapping=aes(x=duration_min, fill=genre)) + geom_density(alpha=0.7) + ggtitle('Duration Distribution in Minutes') + theme_minimal() + xlab('duration') + ylab('frequency')
+ggplotly(viz5) 
+```
+
+*Longest song in each genre?*
+
+```{r}
+all_music %>% filter(duration_min == max(duration_min)) %>% select(track_name, artist, genre, duration_min, tempo, key_and_mode) %>% knitr::kable()
+```
+
+*Shortest song in each genre?*
+
+```{r}
+all_music %>% filter(duration_min == min(duration_min)) %>% select(track_name, artist, genre, duration_min, tempo, key_and_mode) %>% knitr::kable()
+```
+
+We again see vaporwave's diversity on display, with its spread on the plot and its longest song being a whopping 7 minutes!
+
+
+<h3 align='center'> Inferences </h3>
+
+Looking at the details, even though these genres have grown to be as eclectic and widespread as the internet itself, there are very clear trends that each genre follows. If you want a loud, short, high energy song with bouncy bass and a fast rhythm, you can go with phonk. If you're in the mood for something more laid back, slow, and bittersweet, lofi is the best choice for you. Vaporwave proves to be diverse across all platforms - but don't listen to it if you like coherent lyrics or shorter songs!
+
+*References*
+
+https://pitchfork.com/reviews/albums/macintosh-plus-floral-shoppe/
+
+https://www.musicorigins.org/the-origins-of-lo-fi/
+
+https://www.theguardian.com/music/2017/jan/27/phonk-soundcloud-spaceghostpurrp-lil-uzi-vert
+
+https://bookdown.org/yihui/rmarkdown/xaringan.html
